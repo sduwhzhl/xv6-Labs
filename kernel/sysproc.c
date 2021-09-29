@@ -7,6 +7,7 @@
 #include "spinlock.h"
 #include "proc.h"
 
+#include "syscall.h"
 uint64
 sys_exit(void)
 {
@@ -94,4 +95,21 @@ sys_uptime(void)
   xticks = ticks;
   release(&tickslock);
   return xticks;
+}
+
+uint64
+sys_trace(void)
+{
+    //fill something
+    //todo: understand what happended when get system call
+
+    int mask;
+    if(argint(0, &mask) < 0)
+      return -1;
+    
+    myproc()->mask = mask;
+    if((mask >> SYS_trace) & 1){
+      printf("%d: syscall trace -> 0\n", myproc()->pid);
+    }
+    return 0;
 }
