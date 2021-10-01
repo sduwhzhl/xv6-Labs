@@ -80,3 +80,22 @@ kalloc(void)
     memset((char*)r, 5, PGSIZE); // fill with junk
   return (void*)r;
 }
+
+extern uint64 freemem(void);
+
+uint64
+freemem(void)
+{
+  // for lab2 sysinfo
+  // get number of bytes of free memory
+  volatile uint64 count = 0;
+  acquire(&kmem.lock);
+  struct run* head = kmem.freelist;
+  while(head){
+    count++;
+    head = head->next;
+  }
+  release(&kmem.lock);
+  //printf("%d\n", count);
+  return count * PGSIZE;
+}

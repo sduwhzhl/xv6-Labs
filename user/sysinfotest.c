@@ -21,7 +21,7 @@ countfree()
   uint64 sz0 = (uint64)sbrk(0);
   struct sysinfo info;
   int n = 0;
-
+  //sinfo(&info);
   while(1){
     if((uint64)sbrk(PGSIZE) == 0xffffffffffffffff){
       break;
