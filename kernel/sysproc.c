@@ -115,10 +115,10 @@ sys_trace(void)
     return 0;
 }
 
-int freemem(void);
-int nproc(void);
-
+extern uint64 freemem(void);
+extern uint64 nproc(void);
 struct sysinfo info;
+
 uint64
 sys_sysinfo(void)
 {

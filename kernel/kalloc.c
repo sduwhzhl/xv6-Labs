@@ -81,8 +81,6 @@ kalloc(void)
   return (void*)r;
 }
 
-extern uint64 freemem(void);
-
 uint64
 freemem(void)
 {

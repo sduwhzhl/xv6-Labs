@@ -697,8 +697,6 @@ procdump(void)
   }
 }
 
-extern uint64 nproc(void);
-
 uint64
 nproc(void)
 {
