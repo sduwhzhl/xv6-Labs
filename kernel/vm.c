@@ -18,6 +18,14 @@ extern char trampoline[]; // trampoline.S
 /*
  * create a direct-map page table for the kernel.
  */
+
+/*
+// add a mapping to the kernel page table.
+// only used when booting.
+// does not flush TLB or enable paging.
+void
+kvmmap(uint64 va, uint64 pa, uint64 sz, int perm)
+*/
 void
 kvminit()
 {
