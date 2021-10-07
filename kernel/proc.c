@@ -11,7 +11,7 @@ struct cpu cpus[NCPU];
 struct proc proc[NPROC];
 
 struct proc *initproc;
-
+extern pagetable_t kernel_pagetable;
 int nextpid = 1;
 struct spinlock pid_lock;
 
@@ -120,6 +120,23 @@ found:
     release(&p->lock);
     return 0;
   }
+  
+  // Lab3: set user kernel page table
+
+  p->kernel_pagetable = mykvminit();
+  if(p->kernel_pagetable == 0){
+    freeproc(p);
+    release(&p->lock);
+    return 0;
+  }
+  
+  // Lab3 : set kernel stack
+  char *pa = kalloc();
+  if(pa == 0)
+    panic("kalloc");
+  uint64 va = KSTACK((int) (p - proc));
+  uvmmap(p->kernel_pagetable, va, (uint64)pa, PGSIZE, PTE_R | PTE_W);
+  p->kstack = va;
 
   // Set up new context to start executing at forkret,
   // which returns to user space.
@@ -141,6 +158,21 @@ freeproc(struct proc *p)
   p->trapframe = 0;
   if(p->pagetable)
     proc_freepagetable(p->pagetable, p->sz);
+
+  // Lab3: free kernel stack
+  if(p->kstack){
+    pte_t* pte = walk(p->kernel_pagetable, p->kstack, 0);
+    if(pte == 0){
+      panic("free proc: walk");
+    }
+    kfree((void*) PTE2PA(*pte));
+  }
+  p->kstack = 0;
+
+  // Lab3: free kernel pagetable 
+  if(p->kernel_pagetable){
+    upt_freewalk(p->kernel_pagetable);
+  }
   p->pagetable = 0;
   p->sz = 0;
   p->pid = 0;
@@ -471,14 +503,26 @@ scheduler(void)
         // Switch to chosen process.  It is the process's job
         // to release its lock and then reacquire it
         // before jumping back to us.
+
+        // set kernel page table, SATP
+      
         p->state = RUNNING;
         c->proc = p;
+
+        w_satp(MAKE_SATP(p->kernel_pagetable));
+        sfence_vma();
+
         swtch(&c->context, &p->context);
 
         // Process is done running for now.
         // It should have changed its p->state before coming back.
+
+        // Lab3 , when cpu is free , use global kernel_pagetable 
         c->proc = 0;
 
+        w_satp(MAKE_SATP(kernel_pagetable));
+        sfence_vma();
+        
         found = 1;
       }
       release(&p->lock);
