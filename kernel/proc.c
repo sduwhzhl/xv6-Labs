@@ -156,9 +156,7 @@ freeproc(struct proc *p)
   if(p->trapframe)
     kfree((void*)p->trapframe);
   p->trapframe = 0;
-  if(p->pagetable)
-    proc_freepagetable(p->pagetable, p->sz);
-
+  
   // Lab3: free kernel stack
   if(p->kstack){
     pte_t* pte = walk(p->kernel_pagetable, p->kstack, 0);
@@ -168,11 +166,14 @@ freeproc(struct proc *p)
     kfree((void*) PTE2PA(*pte));
   }
   p->kstack = 0;
-
+  if(p->pagetable)
+    proc_freepagetable(p->pagetable, p->sz);
   // Lab3: free kernel pagetable 
   if(p->kernel_pagetable){
     upt_freewalk(p->kernel_pagetable);
   }
+  
+  p->kernel_pagetable = 0;
   p->pagetable = 0;
   p->sz = 0;
   p->pid = 0;
@@ -252,6 +253,7 @@ userinit(void)
   // and data into it.
   uvminit(p->pagetable, initcode, sizeof(initcode));
   p->sz = PGSIZE;
+  copytokpt(p->pagetable, p->kernel_pagetable, 0, p->sz);
 
   // prepare for the very first "return" from kernel to user.
   p->trapframe->epc = 0;      // user program counter
@@ -278,6 +280,7 @@ growproc(int n)
     if((sz = uvmalloc(p->pagetable, sz, sz + n)) == 0) {
       return -1;
     }
+    copytokpt(p->pagetable, p->kernel_pagetable,sz - n, sz);
   } else if(n < 0){
     sz = uvmdealloc(p->pagetable, sz, sz + n);
   }
@@ -320,6 +323,8 @@ fork(void)
     if(p->ofile[i])
       np->ofile[i] = filedup(p->ofile[i]);
   np->cwd = idup(p->cwd);
+
+  copytokpt(np->pagetable, np->kernel_pagetable, 0, np->sz);
 
   safestrcpy(np->name, p->name, sizeof(p->name));
 
