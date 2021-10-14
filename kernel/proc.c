@@ -11,7 +11,7 @@ struct cpu cpus[NCPU];
 struct proc proc[NPROC];
 
 struct proc *initproc;
-extern pagetable_t kernel_pagetable;
+
 int nextpid = 1;
 struct spinlock pid_lock;
 
@@ -20,7 +20,7 @@ static void wakeup1(struct proc *chan);
 static void freeproc(struct proc *p);
 
 extern char trampoline[]; // trampoline.S
-
+extern pagetable_t kernel_pagetable;
 // initialize the proc table at boot time.
 void
 procinit(void)
@@ -31,15 +31,6 @@ procinit(void)
   for(p = proc; p < &proc[NPROC]; p++) {
       initlock(&p->lock, "proc");
 
-      // Allocate a page for the process's kernel stack.
-      // Map it high in memory, followed by an invalid
-      // guard page.
-      char *pa = kalloc();
-      if(pa == 0)
-        panic("kalloc");
-      uint64 va = KSTACK((int) (p - proc));
-      kvmmap(va, (uint64)pa, PGSIZE, PTE_R | PTE_W);
-      p->kstack = va;
   }
   kvminithart();
 }
@@ -170,7 +161,7 @@ freeproc(struct proc *p)
     proc_freepagetable(p->pagetable, p->sz);
   // Lab3: free kernel pagetable 
   if(p->kernel_pagetable){
-    upt_freewalk(p->kernel_pagetable);
+    kpt_freewalk(p->kernel_pagetable);
   }
   
   p->kernel_pagetable = 0;

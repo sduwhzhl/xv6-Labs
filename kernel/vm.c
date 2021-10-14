@@ -311,17 +311,19 @@ uvmdealloc(pagetable_t pagetable, uint64 oldsz, uint64 newsz)
 
 // Recursively free user kernel pagetable
 void
-upt_freewalk(pagetable_t pagetable)
+kpt_freewalk(pagetable_t pagetable)
 {
-  for(int i = 0;i < 512;i++){
+  for(int i = 0; i < 512; i++){
     pte_t pte = pagetable[i];
     if((pte & PTE_V)){
       pagetable[i] = 0;
-      if((pte & (PTE_R|PTE_W|PTE_X)) == 0){
-        // this PTE points to a lower-level page table. 
+      if ((pte & (PTE_R|PTE_W|PTE_X)) == 0)
+      {
         uint64 child = PTE2PA(pte);
-        upt_freewalk((pagetable_t)child);
+        kpt_freewalk((pagetable_t)child);
       }
+    } else if(pte & PTE_V){
+      panic("proc free kpt: leaf");
     }
   }
   kfree((void*)pagetable);
@@ -466,7 +468,7 @@ copyin(pagetable_t pagetable, char *dst, uint64 srcva, uint64 len)
 int
 copyinstr(pagetable_t pagetable, char *dst, uint64 srcva, uint64 max)
 { 
-  return copyin_new(pagetable, dst, srcva, max);
+  return copyinstr_new(pagetable, dst, srcva, max);
   // uint64 n, va0, pa0;
   // int got_null = 0;
 
