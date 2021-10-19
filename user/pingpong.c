@@ -1,5 +1,4 @@
 #include "kernel/types.h"
-#include "kernel/kernel.h"
 #include "user/user.h"
 
 #define R 0

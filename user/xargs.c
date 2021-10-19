@@ -20,7 +20,7 @@ int main(int argc, char* argv[]){
         args[idx++] = argv[i];
     }
     char buf[512];
-    while(1){
+	while(1){
         char* ch = buf;
         int len;
         int argIdx = idx;
