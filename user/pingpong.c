@@ -1,65 +1,48 @@
-/**
- *    pingpong.c 
-**/
-#include <kernel/types.h>
-#include <user/user.h>
+#include "kernel/types.h"
+#include "kernel/kernel.h"
+#include "user/user.h"
 
-int main(){
-	
-	int pipeToChild[2];
-	int pipeToParent[2];
+#define R 0
+#define W 1
 
-	pipe(pipeToChild);
-	pipe(pipeToParent);
-	
+int main(int argc, char* argv[])
+{
+  int f2s[2], s2f[2]; //father to son, son to father
+  pipe(f2s); pipe(s2f);
+  int pid;
+  char buf[1];
+  
+  if((pid = fork()) < 0)
+    exit(1);
 
-	int pid = fork();
-	char c;
-	int n;
-	if(pid == 0){ //child
-		close(pipeToChild[1]);
-		close(pipeToParent[0]);
-		
-		n = read(pipeToChild[0], &c, 1);
-		/*
-			don't call write here to make output order correct
-			first ping
-			then pong
-			
-			call it after output ping
-		*/
+  if(pid == 0){
+    //son
+    close(s2f[R]);
+    close(f2s[W]);
+    read(f2s[R], buf, 1);
+    printf("%d: received ping\n", getpid());
+    write(s2f[W], buf, 1);
 
-		if(n != 1){
-			fprintf(2, "child does not recevie 1 byte\n");
-			exit(1);
-		}
-		printf("%d: received ping\n", getpid());
-		write(pipeToParent[1], &c, 1);
+    close(s2f[W]);
+    close(f2s[R]);
 
-		close(pipeToChild[0]);
-		close(pipeToParent[1]);
+    exit(0);
+  }else{
+    //parent
+    close(s2f[W]);
+    close(f2s[R]);
 
-	}else if(pid > 0){ //parent
-		close(pipeToChild[0]);
-		close(pipeToParent[1]);
-		
-		write(pipeToChild[1], &c, 1);
-		n = read(pipeToParent[0], &c, 1);
+    write(f2s[W], buf, 1);
+    read(s2f[R], buf, 1);
 
-		if(n != 1){
-			fprintf(2, "parent does not recevie 1 byte\n");
-			exit(1);
-		}
+    printf("%d: received pong\n", getpid());
 
-		printf("%d: received pong\n", getpid());
+    close(s2f[R]);
+    close(f2s[W]);
+    exit(0);
+    
+  }
+  
 
-		close(pipeToChild[1]);
-		close(pipeToParent[0]);
-		wait(0);
-	}else{
-		write(2, "fork fail", 10);
-		exit(1);
-	}
-
-	exit(0);
 }
+
