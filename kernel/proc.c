@@ -93,7 +93,7 @@ static struct proc*
 allocproc(void)
 {
   struct proc *p;
-
+  
   for(p = proc; p < &proc[NPROC]; p++) {
     acquire(&p->lock);
     if(p->state == UNUSED) {
