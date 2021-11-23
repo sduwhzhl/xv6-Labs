@@ -86,6 +86,7 @@ void            panic(char*) __attribute__((noreturn));
 void            printfinit(void);
 
 // proc.c
+void            freekpt(pagetable_t);
 int             cpuid(void);
 void            exit(int);
 int             fork(void);
@@ -157,7 +158,14 @@ void            uartputc(int);
 void            uartputc_sync(int);
 int             uartgetc(void);
 
+//vmcopyin.c
+int             copyin_new(pagetable_t, char *, uint64, uint64);
+int             copyinstr_new(pagetable_t, char *, uint64, uint64);
+
 // vm.c
+void            u2kvmcopy(pagetable_t, pagetable_t, uint64, uint64);
+pte_t *         walk(pagetable_t, uint64, int);
+void            uvmmap(pagetable_t, uint64, uint64, uint64, int);
 void            kvminit(void);
 void            kvminithart(void);
 uint64          kvmpa(uint64);
