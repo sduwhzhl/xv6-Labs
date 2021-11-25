@@ -86,6 +86,11 @@ enum procstate { UNUSED, SLEEPING, RUNNABLE, RUNNING, ZOMBIE };
 struct proc {
   struct spinlock lock;
 
+  int interval;
+  void (*handler)();
+  int ticks;
+  int in_handler;
+  struct trapframe backup;
   // p->lock must be held when using these:
   enum procstate state;        // Process state
   struct proc *parent;         // Parent process

@@ -33,7 +33,7 @@ uint64
 sys_wait(void)
 {
   uint64 p;
-  if(argaddr(0, &p) < 0)
+
     return -1;
   return wait(p);
 }
@@ -95,4 +95,30 @@ sys_uptime(void)
   xticks = ticks;
   release(&tickslock);
   return xticks;
+}
+
+uint64
+sys_sigalarm(void)
+{
+  int interval;
+  uint64 addr;
+
+  if(argint(0, &interval) < 0 || argaddr(1, &addr) < 0){
+    return -1;
+  }
+
+  struct proc *p = myproc();
+  p->interval = interval;
+  p->handler = (void(*)()) addr;
+
+  return 0;
+}
+
+uint64
+sys_sigreturn(void)
+{
+  struct proc *p = myproc();
+  *(p->trapframe) = p->backup;
+  p->in_handler = 0;
+  return 0;
 }
